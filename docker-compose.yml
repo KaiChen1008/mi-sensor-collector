@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    env_file:
+      - ./backend/.env
+    # BLE only works on Linux with host networking + Bluetooth device access.
+    # For development or any non-Linux host, use SIMULATE_SENSORS=true in .env.
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # Optional HomeKit bridge — start with: docker compose --profile homekit up
+  homekit:
+    build: ./backend
+    command: python -m app.services.homekit_bridge
+    ports:
+      - "51826:51826"
+      - "51826:51826/udp"
+    volumes:
+      - ./backend/data:/app/data
+    env_file:
+      - ./backend/.env
+    environment:
+      - API_BASE_URL=http://backend:8000
+    depends_on:
+      - backend
+    profiles:
+      - homekit
