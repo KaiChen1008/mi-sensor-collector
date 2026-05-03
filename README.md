@@ -67,9 +67,8 @@ macOS will prompt for Bluetooth permission on first run.
 
 ```bash
 cd backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-SIMULATE_SENSORS=true .venv/bin/python run.py   # or omit SIMULATE_SENSORS for real BLE
+uv sync
+SIMULATE_SENSORS=true uv run python run.py   # or omit SIMULATE_SENSORS for real BLE
 ```
 
 ### Frontend
@@ -142,7 +141,7 @@ status). Once paired, you can:
 2. Start the HomeKit bridge:
    ```bash
    cd backend
-   .venv/bin/python -m app.services.homekit_bridge
+   uv run python -m app.services.homekit_bridge
    ```
 3. A QR code and an 8-digit PIN are printed to the terminal.
 4. Open **Home app** → **+** → **Add Accessory**.
@@ -189,7 +188,7 @@ mi-sensor-collector/
 │   │       └── notifiers/         # Email / Telegram / LINE senders
 │   ├── data/                  # SQLite database + HomeKit state (auto-created; bind-mounted in Docker)
 │   ├── Dockerfile
-│   ├── requirements.txt
+│   ├── pyproject.toml
 │   └── .env.example
 ├── frontend/
 │   ├── src/

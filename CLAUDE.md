@@ -7,13 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Backend (run from `backend/`)
 ```bash
 # First-time setup
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+uv sync
 
 # Start with real BLE sensors (uvicorn with reload=True)
-.venv/bin/python run.py
+uv run python run.py
 
 # Start with simulated data (no BLE hardware needed)
-SIMULATE_SENSORS=true .venv/bin/python run.py
+SIMULATE_SENSORS=true uv run python run.py
 
 # API docs available at http://localhost:8000/docs
 ```
@@ -27,18 +27,18 @@ npm run build     # production build to dist/
 
 ### Tests (run from `backend/`)
 ```bash
-.venv/bin/pytest           # all 73 tests
-.venv/bin/pytest -v        # verbose
-.venv/bin/pytest tests/test_alert_engine.py        # single file
-.venv/bin/pytest tests/test_api_sensors.py -k create   # single test
+uv run pytest           # all 93 tests
+uv run pytest -v        # verbose
+uv run pytest tests/test_alert_engine.py        # single file
+uv run pytest tests/test_api_sensors.py -k create   # single test
 ```
 Tests use an in-memory SQLite database and mock all BLE and external HTTP calls.
 `SIMULATE_SENSORS=true` is set automatically in `conftest.py`.
 
 ### HomeKit bridge (run from `backend/`)
 ```bash
-python -m app.services.homekit_bridge     # starts on port 51826
-HOMEKIT_PORT=51826 python -m app.services.homekit_bridge
+uv run python -m app.services.homekit_bridge     # starts on port 51826
+HOMEKIT_PORT=51826 uv run python -m app.services.homekit_bridge
 ```
 On first run, a QR code and 8-digit PIN are printed. Open **Home app → + → Add Accessory** and scan the QR code (or enter the PIN). HAP pairing state is persisted to `data/homekit/state.json`.
 

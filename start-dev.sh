@@ -2,47 +2,56 @@
 # Start backend + frontend (and optionally the HomeKit bridge) in development mode.
 #
 # Usage:
-#   ./start-dev.sh                    → real BLE sensors
-#   SIMULATE=true ./start-dev.sh      → simulated data (no BLE hardware needed)
-#   HOMEKIT=true ./start-dev.sh       → also start the HomeKit bridge on :51826
+#   ./start-dev.sh                          → real BLE sensors
+#   SIMULATE=true ./start-dev.sh            → simulated data (no BLE hardware needed)
+#   HOMEKIT=true ./start-dev.sh             → also start the HomeKit bridge on :51826
+#   SIMULATE=true HOMEKIT=true ./start-dev.sh
 
-set -e
+set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-# Build venv if missing
-if [ ! -f "$ROOT/backend/.venv/bin/python" ]; then
-  echo "Creating Python venv..."
-  python3 -m venv "$ROOT/backend/.venv"
-  "$ROOT/backend/.venv/bin/pip" install -q -r "$ROOT/backend/requirements.txt"
-fi
+echo "Setting up Python environment..."
+uv sync --project "$ROOT/backend"
 
-# Install frontend deps if missing
-if [ ! -d "$ROOT/frontend/node_modules" ]; then
-  echo "Installing frontend deps..."
-  cd "$ROOT/frontend" && npm install
+# Install frontend deps; re-run npm install if package.json is newer than node_modules
+PKG="$ROOT/frontend/package.json"
+NM="$ROOT/frontend/node_modules"
+if [ ! -d "$NM" ] || [ "$PKG" -nt "$NM" ]; then
+  echo "Installing frontend dependencies..."
+  npm install --prefix "$ROOT/frontend" --silent
 fi
 
 SIMULATE=${SIMULATE:-false}
 HOMEKIT=${HOMEKIT:-false}
 
-echo "Starting backend on :8000 (simulate=$SIMULATE)..."
+echo "Starting backend  → http://localhost:8000  (simulate=$SIMULATE)"
 cd "$ROOT/backend"
-SIMULATE_SENSORS=$SIMULATE .venv/bin/python run.py &
+SIMULATE_SENSORS=$SIMULATE uv run python run.py &
 BACKEND_PID=$!
 
-echo "Starting frontend on :3000..."
-cd "$ROOT/frontend"
-npm run dev &
+echo "Starting frontend → http://localhost:3000"
+npm run dev --prefix "$ROOT/frontend" &
 FRONTEND_PID=$!
 
 HOMEKIT_PID=""
 if [ "$HOMEKIT" = "true" ]; then
-  echo "Starting HomeKit bridge on :51826..."
-  sleep 2  # wait for backend to be ready
-  cd "$ROOT/backend"
-  .venv/bin/python -m app.services.homekit_bridge &
+  printf "Waiting for backend to be ready..."
+  until curl -sf http://localhost:8000/health > /dev/null 2>&1; do
+    printf "."
+    sleep 1
+  done
+  echo " ready."
+  echo "Starting HomeKit bridge → port 51826"
+  uv run python -m app.services.homekit_bridge &
   HOMEKIT_PID=$!
 fi
 
-trap "kill $BACKEND_PID $FRONTEND_PID ${HOMEKIT_PID} 2>/dev/null" EXIT INT TERM
+echo ""
+echo "  Frontend  http://localhost:3000"
+echo "  API docs  http://localhost:8000/docs"
+[ "$HOMEKIT" = "true" ] && echo "  HomeKit   port 51826"
+echo ""
+echo "Press Ctrl+C to stop all processes."
+
+trap 'kill "$BACKEND_PID" "$FRONTEND_PID" ${HOMEKIT_PID:+"$HOMEKIT_PID"} 2>/dev/null; exit' INT TERM EXIT
 wait
