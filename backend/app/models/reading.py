@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,8 +14,6 @@ class Reading(Base):
     temperature: Mapped[float] = mapped_column(Float)
     humidity: Mapped[float] = mapped_column(Float)
     battery: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    timestamp: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), index=True
-    )
+    timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
 
     sensor: Mapped["Sensor"] = relationship(back_populates="readings")

@@ -1,7 +1,8 @@
 """Integration tests for the /api/readings endpoints."""
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 
 async def _create_sensor(client, addr="AA:BB:01"):
@@ -11,6 +12,7 @@ async def _create_sensor(client, addr="AA:BB:01"):
 
 async def _add_reading(db_session, sensor_id, temperature=22.0, humidity=55.0, battery=90):
     from app.models.reading import Reading
+
     r = Reading(
         sensor_id=sensor_id,
         temperature=temperature,

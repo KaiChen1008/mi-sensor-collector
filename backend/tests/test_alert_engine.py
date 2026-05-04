@@ -1,13 +1,14 @@
 """Unit tests for the alert rule evaluation engine."""
 
-import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.alert_engine import evaluate_rules, OPERATORS, _metric_value
-from app.models.alert_rule import AlertRule, AlertLog
+import pytest
+
+from app.models.alert_rule import AlertLog, AlertRule
 from app.models.reading import Reading
 from app.models.sensor import Sensor
+from app.services.alert_engine import OPERATORS, _metric_value, evaluate_rules
 
 
 def make_sensor(id=1, name="Room"):
@@ -73,16 +74,19 @@ class TestMetricValue:
 
 
 class TestOperators:
-    @pytest.mark.parametrize("op,a,b,expected", [
-        (">", 61, 60, True),
-        (">", 60, 60, False),
-        ("<", 59, 60, True),
-        (">=", 60, 60, True),
-        ("<=", 60, 60, True),
-        ("==", 60, 60, True),
-        ("!=", 59, 60, True),
-        ("!=", 60, 60, False),
-    ])
+    @pytest.mark.parametrize(
+        "op,a,b,expected",
+        [
+            (">", 61, 60, True),
+            (">", 60, 60, False),
+            ("<", 59, 60, True),
+            (">=", 60, 60, True),
+            ("<=", 60, 60, True),
+            ("==", 60, 60, True),
+            ("!=", 59, 60, True),
+            ("!=", 60, 60, False),
+        ],
+    )
     def test_comparison(self, op, a, b, expected):
         fn = OPERATORS[op]
         assert fn(a, b) == expected
@@ -124,7 +128,9 @@ class TestEvaluateRules:
     @pytest.mark.asyncio
     async def test_respects_cooldown(self):
         recent = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5)
-        rule = make_rule(metric="humidity", operator=">", threshold=60.0, cooldown=30, last_triggered_at=recent)
+        rule = make_rule(
+            metric="humidity", operator=">", threshold=60.0, cooldown=30, last_triggered_at=recent
+        )
         reading = make_reading(humidity=80.0)
         sensor = make_sensor()
 
@@ -134,7 +140,9 @@ class TestEvaluateRules:
     @pytest.mark.asyncio
     async def test_fires_after_cooldown_expires(self):
         old = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=60)
-        rule = make_rule(metric="humidity", operator=">", threshold=60.0, cooldown=30, last_triggered_at=old)
+        rule = make_rule(
+            metric="humidity", operator=">", threshold=60.0, cooldown=30, last_triggered_at=old
+        )
         reading = make_reading(humidity=80.0)
         sensor = make_sensor()
 

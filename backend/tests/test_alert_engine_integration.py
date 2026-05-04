@@ -5,10 +5,10 @@ WHERE clause that scopes rules to sensors.  These tests use a real in-memory
 SQLite DB to cover that gap.
 """
 
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from sqlalchemy import select
 
 from app.models.alert_rule import AlertLog, AlertRule
@@ -16,8 +16,8 @@ from app.models.reading import Reading
 from app.models.sensor import Sensor
 from app.services.alert_engine import evaluate_rules
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 async def _sensor(db, name="Room", addr="AA:01"):
     s = Sensor(name=name, ble_address=addr)
@@ -70,6 +70,7 @@ async def _run(db, sensor, reading, notifier=None):
 
 # ── tests ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 class TestRuleScoping:
     async def test_global_rule_fires_for_any_sensor(self, db_session):
@@ -91,7 +92,7 @@ class TestRuleScoping:
     async def test_sensor_scoped_rule_skipped_for_different_sensor(self, db_session):
         s1 = await _sensor(db_session, name="S1", addr="S1:03")
         s2 = await _sensor(db_session, name="S2", addr="S1:04")
-        await _rule(db_session, sensor_id=s1.id)   # scoped to s1
+        await _rule(db_session, sensor_id=s1.id)  # scoped to s1
         reading = await _reading(db_session, s2.id, humidity=70.0)  # from s2
 
         notifier = await _run(db_session, s2, reading)
@@ -108,8 +109,8 @@ class TestRuleScoping:
     async def test_only_matching_scoped_rule_fires_among_multiple(self, db_session):
         s1 = await _sensor(db_session, name="S1", addr="S1:06")
         s2 = await _sensor(db_session, name="S2", addr="S1:07")
-        await _rule(db_session, sensor_id=s1.id)   # should fire
-        await _rule(db_session, sensor_id=s2.id)   # should not fire
+        await _rule(db_session, sensor_id=s1.id)  # should fire
+        await _rule(db_session, sensor_id=s2.id)  # should not fire
         reading = await _reading(db_session, s1.id, humidity=70.0)
 
         notifier = await _run(db_session, s1, reading)
@@ -195,7 +196,7 @@ class TestAlertLogsAPI:
     async def test_logs_filtered_by_rule_id(self, client, db_session):
         sensor = await _sensor(db_session, addr="S3:02")
         rule1 = await _rule(db_session, sensor_id=None)
-        rule2 = await _rule(db_session, sensor_id=None)
+        await _rule(db_session, sensor_id=None)
         r1 = await _reading(db_session, sensor.id, humidity=70.0)
         r2 = await _reading(db_session, sensor.id, humidity=70.0)
 

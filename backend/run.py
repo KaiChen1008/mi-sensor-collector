@@ -1,5 +1,7 @@
 """Convenience entry-point: python run.py"""
+
 import uvicorn
+
 from app.config import settings
 
 if __name__ == "__main__":

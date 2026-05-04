@@ -1,5 +1,6 @@
-import aiosmtplib
 from email.mime.text import MIMEText
+
+import aiosmtplib
 
 from app.config import settings
 from app.services.notifiers.base import BaseNotifier

@@ -4,8 +4,9 @@ The list_readings endpoint accepts optional `start` and `end` query params
 that are not covered by test_api_readings.py.
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 
 from app.models.reading import Reading
 
@@ -20,7 +21,9 @@ async def _sensor(client, addr):
 
 
 async def _reading(db, sensor_id, temperature, dt):
-    r = Reading(sensor_id=sensor_id, temperature=temperature, humidity=50.0, battery=80, timestamp=dt)
+    r = Reading(
+        sensor_id=sensor_id, temperature=temperature, humidity=50.0, battery=80, timestamp=dt
+    )
     db.add(r)
     await db.commit()
     return r

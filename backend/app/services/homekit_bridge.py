@@ -40,7 +40,6 @@ import signal
 import httpx
 from pyhap.accessory import Accessory, Bridge
 from pyhap.accessory_driver import AccessoryDriver
-from pyhap.const import HAP_REPR_AID
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +95,7 @@ class MiTemperatureHumiditySensor(Accessory):
 #  Polling loop                                                                 #
 # --------------------------------------------------------------------------- #
 
+
 async def _poll_loop(accessories: dict[int, MiTemperatureHumiditySensor]) -> None:
     async with httpx.AsyncClient(base_url=API_BASE, timeout=10) as http:
         while True:
@@ -133,6 +133,7 @@ async def _fetch_sensors() -> list[dict]:
 #  Entry point                                                                  #
 # --------------------------------------------------------------------------- #
 
+
 def run() -> None:
     logging.basicConfig(level=logging.INFO)
     os.makedirs(HAP_STATE_DIR, exist_ok=True)
@@ -140,7 +141,9 @@ def run() -> None:
     # Fetch registered sensors synchronously before starting the driver
     sensors = asyncio.run(_fetch_sensors())
     if not sensors:
-        logger.warning("No active sensors found in the API. Add sensors first, then restart the bridge.")
+        logger.warning(
+            "No active sensors found in the API. Add sensors first, then restart the bridge."
+        )
 
     driver = AccessoryDriver(port=HAP_PORT, persist_file=HAP_STATE_FILE)
 

@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -17,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 # --------------------------------------------------------------------------- #
 #  WebSocket connection manager                                                 #
 # --------------------------------------------------------------------------- #
+
 
 class ConnectionManager:
     def __init__(self) -> None:
@@ -47,6 +47,7 @@ manager = ConnectionManager()
 # --------------------------------------------------------------------------- #
 #  App lifespan                                                                 #
 # --------------------------------------------------------------------------- #
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -33,7 +33,9 @@ class TestSensorsCRUD:
         assert resp.status_code in (400, 409, 500)
 
     async def test_get_sensor(self, client):
-        created = (await client.post("/api/sensors", json={"name": "S1", "ble_address": "XX:01"})).json()
+        created = (
+            await client.post("/api/sensors", json={"name": "S1", "ble_address": "XX:01"})
+        ).json()
         resp = await client.get(f"/api/sensors/{created['id']}")
         assert resp.status_code == 200
         assert resp.json()["name"] == "S1"
@@ -43,19 +45,27 @@ class TestSensorsCRUD:
         assert resp.status_code == 404
 
     async def test_patch_sensor(self, client):
-        created = (await client.post("/api/sensors", json={"name": "Old", "ble_address": "YY:01"})).json()
-        resp = await client.patch(f"/api/sensors/{created['id']}", json={"name": "New", "location": "Hall"})
+        created = (
+            await client.post("/api/sensors", json={"name": "Old", "ble_address": "YY:01"})
+        ).json()
+        resp = await client.patch(
+            f"/api/sensors/{created['id']}", json={"name": "New", "location": "Hall"}
+        )
         assert resp.status_code == 200
         assert resp.json()["name"] == "New"
         assert resp.json()["location"] == "Hall"
 
     async def test_patch_active_flag(self, client):
-        created = (await client.post("/api/sensors", json={"name": "S", "ble_address": "ZZ:01"})).json()
+        created = (
+            await client.post("/api/sensors", json={"name": "S", "ble_address": "ZZ:01"})
+        ).json()
         resp = await client.patch(f"/api/sensors/{created['id']}", json={"is_active": False})
         assert resp.json()["is_active"] is False
 
     async def test_delete_sensor(self, client):
-        created = (await client.post("/api/sensors", json={"name": "Del", "ble_address": "DD:01"})).json()
+        created = (
+            await client.post("/api/sensors", json={"name": "Del", "ble_address": "DD:01"})
+        ).json()
         resp = await client.delete(f"/api/sensors/{created['id']}")
         assert resp.status_code == 204
 

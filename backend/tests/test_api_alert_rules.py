@@ -1,8 +1,8 @@
 """Integration tests for the /api/alert-rules endpoints."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
 
+import pytest
 
 RULE = {
     "name": "High humidity",
@@ -36,7 +36,16 @@ class TestAlertRulesCRUD:
 
     async def test_list_after_create(self, client):
         await client.post("/api/alert-rules", json=RULE)
-        await client.post("/api/alert-rules", json={**RULE, "name": "Low battery", "metric": "battery", "operator": "<", "threshold": 20})
+        await client.post(
+            "/api/alert-rules",
+            json={
+                **RULE,
+                "name": "Low battery",
+                "metric": "battery",
+                "operator": "<",
+                "threshold": 20,
+            },
+        )
         resp = await client.get("/api/alert-rules")
         assert len(resp.json()) == 2
 

@@ -7,18 +7,17 @@ the FastAPI app with its own fresh database per test.
 """
 
 import os
-import pytest
+
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 # Point at an in-memory DB *before* any app code imports the engine
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("SIMULATE_SENSORS", "true")
 
-from app.main import app
 from app.database import Base, get_db
-
+from app.main import app
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -50,6 +49,7 @@ async def client(db_session):
 
     # Prevent the BLE scanner background task from starting during tests
     from app.services import ble_scanner
+
     ble_scanner._scanner_instance = None
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

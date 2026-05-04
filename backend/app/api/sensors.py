@@ -3,11 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.sensor import Sensor
 from app.schemas.sensor import DiscoveredDevice, SensorCreate, SensorOut, SensorUpdate
 from app.services import ble_scanner
-from app.config import settings
 
 router = APIRouter()
 
@@ -54,9 +54,7 @@ async def get_sensor(sensor_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{sensor_id}", response_model=SensorOut)
-async def update_sensor(
-    sensor_id: int, body: SensorUpdate, db: AsyncSession = Depends(get_db)
-):
+async def update_sensor(sensor_id: int, body: SensorUpdate, db: AsyncSession = Depends(get_db)):
     sensor = await db.get(Sensor, sensor_id)
     if not sensor:
         raise HTTPException(status_code=404, detail="Sensor not found")
@@ -90,5 +88,6 @@ async def trigger_read(sensor_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=503, detail="Scanner not running")
 
     import asyncio
+
     asyncio.create_task(scanner_instance._read_and_store(sensor))
     return {"status": "read triggered"}

@@ -1,15 +1,19 @@
 """Unit tests for notification channel implementations."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
 class TestEmailNotifier:
     @pytest.mark.asyncio
     async def test_sends_email(self):
-        with patch("app.services.notifiers.email_notifier.settings") as mock_settings, \
-             patch("app.services.notifiers.email_notifier.aiosmtplib.send", new_callable=AsyncMock) as mock_send:
-
+        with (
+            patch("app.services.notifiers.email_notifier.settings") as mock_settings,
+            patch(
+                "app.services.notifiers.email_notifier.aiosmtplib.send", new_callable=AsyncMock
+            ) as mock_send,
+        ):
             mock_settings.smtp_user = "sender@example.com"
             mock_settings.smtp_from = "sender@example.com"
             mock_settings.smtp_host = "smtp.example.com"
@@ -17,6 +21,7 @@ class TestEmailNotifier:
             mock_settings.smtp_password = "secret"
 
             from app.services.notifiers.email_notifier import EmailNotifier
+
             notifier = EmailNotifier()
             await notifier.send("recipient@example.com", "Test Subject", "Test body")
 
@@ -31,6 +36,7 @@ class TestEmailNotifier:
             mock_settings.smtp_user = ""
 
             from app.services.notifiers.email_notifier import EmailNotifier
+
             notifier = EmailNotifier()
             with pytest.raises(RuntimeError, match="SMTP credentials not configured"):
                 await notifier.send("r@e.com", "s", "b")
@@ -47,12 +53,17 @@ class TestTelegramNotifier:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("app.services.notifiers.telegram_notifier.settings") as mock_settings, \
-             patch("app.services.notifiers.telegram_notifier.httpx.AsyncClient", return_value=mock_client):
-
+        with (
+            patch("app.services.notifiers.telegram_notifier.settings") as mock_settings,
+            patch(
+                "app.services.notifiers.telegram_notifier.httpx.AsyncClient",
+                return_value=mock_client,
+            ),
+        ):
             mock_settings.telegram_bot_token = "123:ABC"
 
             from app.services.notifiers.telegram_notifier import TelegramNotifier
+
             notifier = TelegramNotifier()
             await notifier.send("987654321", "Alert", "Body text")
 
@@ -69,6 +80,7 @@ class TestTelegramNotifier:
             mock_settings.telegram_bot_token = ""
 
             from app.services.notifiers.telegram_notifier import TelegramNotifier
+
             notifier = TelegramNotifier()
             with pytest.raises(RuntimeError, match="Telegram bot token not configured"):
                 await notifier.send("123", "s", "b")
@@ -85,8 +97,11 @@ class TestLineNotifier:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("app.services.notifiers.line_notifier.httpx.AsyncClient", return_value=mock_client):
-            from app.services.notifiers.line_notifier import LineNotifier, LINE_NOTIFY_URL
+        with patch(
+            "app.services.notifiers.line_notifier.httpx.AsyncClient", return_value=mock_client
+        ):
+            from app.services.notifiers.line_notifier import LINE_NOTIFY_URL, LineNotifier
+
             notifier = LineNotifier()
             await notifier.send("my-line-token", "High Humidity", "Humidity is 80%")
 
@@ -100,6 +115,7 @@ class TestLineNotifier:
 class TestNotifiersRegistry:
     def test_all_channels_registered(self):
         from app.services.notifiers import NOTIFIERS
+
         assert "email" in NOTIFIERS
         assert "telegram" in NOTIFIERS
         assert "line" in NOTIFIERS
@@ -107,5 +123,6 @@ class TestNotifiersRegistry:
     def test_all_implement_base(self):
         from app.services.notifiers import NOTIFIERS
         from app.services.notifiers.base import BaseNotifier
+
         for name, notifier in NOTIFIERS.items():
             assert isinstance(notifier, BaseNotifier), f"{name} is not a BaseNotifier"

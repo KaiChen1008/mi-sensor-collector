@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,10 +16,10 @@ class AlertRule(Base):
     sensor_id: Mapped[int | None] = mapped_column(
         ForeignKey("sensors.id"), nullable=True, index=True
     )
-    metric: Mapped[str] = mapped_column(String(50))      # temperature | humidity | battery
-    operator: Mapped[str] = mapped_column(String(10))    # > | < | >= | <= | == | !=
+    metric: Mapped[str] = mapped_column(String(50))  # temperature | humidity | battery
+    operator: Mapped[str] = mapped_column(String(10))  # > | < | >= | <= | == | !=
     threshold: Mapped[float] = mapped_column(Float)
-    channel: Mapped[str] = mapped_column(String(50))     # email | telegram | line
+    channel: Mapped[str] = mapped_column(String(50))  # email | telegram | line
     channel_target: Mapped[str] = mapped_column(String(500))
     cooldown_minutes: Mapped[int] = mapped_column(Integer, default=30)
     last_triggered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

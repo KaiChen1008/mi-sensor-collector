@@ -1,7 +1,8 @@
 """Unit tests for the LYWSD03MMC BLE characteristic data parser."""
 
 import pytest
-from app.services.ble_scanner import read_sensor_ble, SensorData
+
+from app.services.ble_scanner import SensorData
 
 
 def parse(raw: bytes) -> SensorData:

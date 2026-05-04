@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.alert_rule import AlertRule, AlertLog
+from app.models.alert_rule import AlertLog, AlertRule
 from app.models.reading import Reading
 from app.models.sensor import Sensor
 from app.services.notifiers import NOTIFIERS
@@ -23,7 +23,11 @@ OPERATORS = {
 
 
 def _metric_value(reading: Reading, metric: str) -> float | None:
-    return {"temperature": reading.temperature, "humidity": reading.humidity, "battery": reading.battery}.get(metric)
+    return {
+        "temperature": reading.temperature,
+        "humidity": reading.humidity,
+        "battery": reading.battery,
+    }.get(metric)
 
 
 async def evaluate_rules(db: AsyncSession, reading: Reading, sensor: Sensor) -> None:
@@ -31,8 +35,8 @@ async def evaluate_rules(db: AsyncSession, reading: Reading, sensor: Sensor) -> 
 
     result = await db.execute(
         select(AlertRule).where(
-            AlertRule.is_active == True,
-            (AlertRule.sensor_id == sensor.id) | (AlertRule.sensor_id == None),
+            AlertRule.is_active,
+            (AlertRule.sensor_id == sensor.id) | (AlertRule.sensor_id.is_(None)),
         )
     )
     rules = result.scalars().all()
@@ -70,7 +74,8 @@ async def _fire_alert(
     body = (
         f"Sensor: {sensor.name} ({sensor.location or 'no location'})\n"
         f"Rule: {rule.name}\n"
-        f"Condition: {metric_labels.get(rule.metric, rule.metric)} {rule.operator} {rule.threshold}{unit}\n"
+        f"Condition: {metric_labels.get(rule.metric, rule.metric)}"
+        f" {rule.operator} {rule.threshold}{unit}\n"
         f"Current value: {value}{unit}\n"
         f"Time: {now.strftime('%Y-%m-%d %H:%M:%S')} UTC"
     )
@@ -83,7 +88,9 @@ async def _fire_alert(
         if notifier:
             await notifier.send(rule.channel_target, subject, body)
             sent = True
-            logger.info("Alert sent via %s for rule %d (sensor %s)", rule.channel, rule.id, sensor.name)
+            logger.info(
+                "Alert sent via %s for rule %d (sensor %s)", rule.channel, rule.id, sensor.name
+            )
         else:
             raise RuntimeError(f"Unknown channel: {rule.channel}")
     except Exception as exc:

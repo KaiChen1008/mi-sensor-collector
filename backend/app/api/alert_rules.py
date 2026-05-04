@@ -47,9 +47,7 @@ async def get_rule(rule_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{rule_id}", response_model=AlertRuleOut)
-async def update_rule(
-    rule_id: int, body: AlertRuleUpdate, db: AsyncSession = Depends(get_db)
-):
+async def update_rule(rule_id: int, body: AlertRuleUpdate, db: AsyncSession = Depends(get_db)):
     rule = await db.get(AlertRule, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")

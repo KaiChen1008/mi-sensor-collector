@@ -1,6 +1,6 @@
 import os
+
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
@@ -19,7 +19,7 @@ class Base(DeclarativeBase):
 
 
 async def init_db() -> None:
-    from app.models import sensor, reading, alert_rule  # noqa: F401 — registers models
+    from app.models import alert_rule, reading, sensor  # noqa: F401 — registers models
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

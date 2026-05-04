@@ -61,6 +61,7 @@ async def _broadcast(payload: dict) -> None:
 #  Low-level BLE read                                                           #
 # --------------------------------------------------------------------------- #
 
+
 async def read_sensor_ble(address: str) -> SensorData:
     async with BleakClient(address, timeout=15.0) as client:
         data = await client.read_gatt_char(CHAR_UUID)
@@ -85,6 +86,7 @@ def _simulate_reading() -> SensorData:
 #  BLE discovery (used by the API to list nearby devices)                      #
 # --------------------------------------------------------------------------- #
 
+
 async def discover_devices(timeout: float = 10.0) -> list[dict]:
     devices = await BleakScanner.discover(timeout=timeout, return_adv=True)
     result = []
@@ -102,6 +104,7 @@ async def discover_devices(timeout: float = 10.0) -> list[dict]:
 # --------------------------------------------------------------------------- #
 #  Background scanner loop                                                      #
 # --------------------------------------------------------------------------- #
+
 
 class BLEScanner:
     def __init__(self) -> None:
@@ -133,7 +136,7 @@ class BLEScanner:
 
     async def _scan_all_sensors(self) -> None:
         async with AsyncSessionLocal() as db:
-            result = await db.execute(select(Sensor).where(Sensor.is_active == True))
+            result = await db.execute(select(Sensor).where(Sensor.is_active))
             sensors = result.scalars().all()
 
         for sensor in sensors:
