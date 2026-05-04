@@ -189,3 +189,20 @@ class BLEScanner:
             data.humidity,
             data.battery,
         )
+
+
+if __name__ == "__main__":
+
+    async def _main() -> None:
+        scanner = BLEScanner()
+        await scanner.start()
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            pass
+        finally:
+            await scanner.stop()
+
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(_main())
