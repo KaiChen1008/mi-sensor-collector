@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Sensor Collector — Architecture Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', fontFamily: 'ui-monospace, monospace' });
+    document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #3b82f6;
+      --accent-light: #eff6ff;
+      --code-bg: #f1f5f9;
+      --tag-bg: #dbeafe;
+      --tag-text: #1d4ed8;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav .logo {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    nav ul { list-style: none; }
+    nav li { margin: 0.15rem 0; }
+    nav a {
+      display: block;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.875rem;
+      color: var(--muted);
+      transition: background 0.15s, color 0.15s;
+    }
+    nav a:hover, nav a.active {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    nav .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      padding: 0.75rem 0.75rem 0.25rem;
+    }
+
+    main {
+      flex: 1;
+      max-width: 900px;
+      padding: 3rem 3rem 6rem;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-header p { color: var(--muted); font-size: 1rem; }
+
+    .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .badge {
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 99px;
+    }
+
+    /* ── Sections ── */
+    section {
+      margin-bottom: 4rem;
+      scroll-margin-top: 2rem;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h2 .num {
+      background: var(--accent);
+      color: white;
+      font-size: 0.75rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 2rem 0 0.75rem;
+      color: var(--text);
+    }
+
+    p { margin-bottom: 0.75rem; font-size: 0.95rem; }
+
+    /* ── Diagram box ── */
+    .diagram-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.25rem 0;
+      overflow-x: auto;
+    }
+    .diagram-box .mermaid { display: flex; justify-content: center; }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin: 1rem 0;
+    }
+    th {
+      background: var(--code-bg);
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    td {
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    code {
+      font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+      font-size: 0.85em;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      color: #be185d;
+    }
+
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: 0.83rem;
+      line-height: 1.6;
+      margin: 1rem 0;
+    }
+    pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    .callout {
+      background: var(--accent-light);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      margin: 1rem 0;
+    }
+    .callout strong { color: var(--accent); }
+
+    ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+    li { font-size: 0.9rem; margin-bottom: 0.3rem; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav>
+    <div class="logo">Mi Sensor Collector</div>
+    <div class="section-label">Architecture</div>
+    <ul>
+      <li><a href="#overview">1. System Overview</a></li>
+      <li><a href="#dataflow">2. Data Flow</a></li>
+      <li><a href="#schema">3. Database Schema</a></li>
+      <li><a href="#backend">4. Backend Modules</a></li>
+      <li><a href="#frontend">5. Frontend Tree</a></li>
+      <li><a href="#decisions">6. 架構決策</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── Main content ── -->
+  <main>
+    <div class="page-header">
+      <h1>Architecture &amp; Code Guide</h1>
+      <p>Mi Sensor Collector 完整架構解析 — 從 BLE 硬體到 Apple HomeKit 的每個環節。</p>
+      <div class="badge-row">
+        <span class="badge">Python · FastAPI</span>
+        <span class="badge">React · Vite</span>
+        <span class="badge">SQLite · SQLAlchemy</span>
+        <span class="badge">HAP-python</span>
+        <span class="badge">bleak BLE</span>
+      </div>
+    </div>
+
+    <!-- ── 1. System Overview ── -->
+    <section id="overview">
+      <h2><span class="num">1</span> System Architecture Overview</h2>
+      <p class="section-desc">整個 project 有 4 個獨立執行單元，以 Backend 為中心向外輻射。</p>
+
+      <table>
+        <thead><tr><th>執行單元</th><th>技術</th><th>Port</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>Backend</td><td>Python FastAPI + asyncio</td><td>8000</td><td>主程式，所有邏輯入口</td></tr>
+          <tr><td>Frontend</td><td>React 18 + Vite</td><td>3000</td><td>Web UI，dev 模式代理到 8000</td></tr>
+          <tr><td>HomeKit Bridge</td><td>HAP-python</td><td>51826</td><td>獨立 process，透過 REST API 取資料</td></tr>
+          <tr><td>外部服務</td><td>Gmail / Telegram / LINE</td><td>—</td><td>通知出口</td></tr>
+        </tbody>
+      </table>
+
+      <div class="diagram-box">
+        <div class="mermaid">
+graph TB
+    subgraph HW["Hardware"]
+        SENSOR["Xiaomi LYWSD03MMC\nBLE Sensor"]
+    end
+
+    subgraph BE["Backend · FastAPI :8000"]
+        BLE["BLEScanner\nasyncio Task"]
+        AE["Alert Engine"]
+        WSNODE["WebSocket /ws"]
+        DB[("SQLite\nsensors.db")]
+        RESTAPI["REST API\n/api/sensors\n/api/readings\n/api/alert-rules"]
+        N1["Email\naiosmtplib"]
+        N2["Telegram\nhttpx"]
+        N3["LINE Notify\nhttpx"]
+    end
+
+    subgraph HK["HomeKit Bridge :51826"]
+        HAP["HAP-python\nstandalone process"]
+    end
+
+    subgraph FE["Frontend · React/Vite :3000"]
+        DASH["Dashboard\nWebSocket live"]
+        SP["Sensors Page"]
+        AP["Alert Rules Page"]
+        HP["History Page"]
+    end
+
+    SMTP["Gmail SMTP"]
+    TGAPI["Telegram API"]
+    LINEAPI["LINE Notify API"]
+    HOME["Apple Home App"]
+
+    SENSOR -- "BLE GATT 5 bytes" --> BLE
+    BLE --> DB
+    BLE --> AE
+    BLE --> WSNODE
+    AE --> N1
+    AE --> N2
+    AE --> N3
+    N1 --> SMTP
+    N2 --> TGAPI
+    N3 --> LINEAPI
+    DB <--> RESTAPI
+    WSNODE -- "push JSON" --> DASH
+    RESTAPI --> DASH
+    RESTAPI --> SP
+    RESTAPI --> AP
+    RESTAPI --> HP
+    HAP -- "polls /readings/latest" --> RESTAPI
+    HAP -- "HAP protocol" --> HOME
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>重點：</strong> HomeKit Bridge 必須是獨立 process。HAP-python 有自己的 asyncio event loop，嵌入 FastAPI lifespan 會 deadlock。
+      </div>
+    </section>
+
+    <!-- ── 2. Data Flow ── -->
+    <section id="dataflow">
+      <h2><span class="num">2</span> Core Data Flow</h2>
+      <p class="section-desc">每隔 <code>SCAN_INTERVAL_SECONDS</code>（預設 60 秒）掃描一次，每次分 3 個階段。</p>
+
+      <div class="diagram-box">
+        <div class="mermaid">
+sequenceDiagram
+    participant S as BLE Sensor
+    participant BLE as BLEScanner
+    participant DB as SQLite
+    participant AE as Alert Engine
+    participant N as Notifier
+    participant WS as WebSocket
+    participant FE as React Dashboard
+
+    loop Every 60s (SCAN_INTERVAL_SECONDS)
+        BLE->>S: read_gatt_char(CHAR_UUID)
+        S-->>BLE: 5 bytes raw data
+        Note over BLE: bytes[0:2] temp/100 C<br/>bytes[2] humidity%<br/>bytes[3:5] voltage to battery%
+        BLE->>DB: INSERT INTO readings
+        BLE->>AE: evaluate_rules(db, reading, sensor)
+        AE->>DB: SELECT active alert_rules
+        DB-->>AE: matching rules
+        loop For each rule
+            AE->>AE: compare value vs threshold
+            alt condition met AND cooldown passed
+                AE->>N: send(target, subject, body)
+                AE->>DB: INSERT INTO alert_logs
+                AE->>DB: UPDATE last_triggered_at
+            end
+        end
+        BLE->>WS: broadcast reading payload
+        WS->>FE: push JSON to all clients
+        FE->>FE: update state by sensor_id
+    end
+        </div>
+      </div>
+
+      <h3>階段 ① — BLE 讀取與解析</h3>
+      <p>GATT characteristic UUID <code>ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6</code> 回傳 5 bytes：</p>
+      <pre><code class="language-python"># backend/app/services/ble_scanner.py
+data = await client.read_gatt_char(CHAR_UUID)
+temp     = int.from_bytes(data[0:2], signed=True) / 100   # e.g. 2650 → 26.50°C
+humidity = data[2]                                          # e.g. 65 → 65%
+voltage  = int.from_bytes(data[3:5]) / 1000               # e.g. 2800 → 2.8V
+battery  = max(0, min(100, int((voltage - 2.1) / 1.0 * 100)))</code></pre>
+      <p>沒有 BLE 硬體時，<code>SIMULATE_SENSORS=true</code> 會改呼叫 <code>_simulate_reading()</code> 回傳隨機數值。</p>
+
+      <h3>階段 ② — Alert Engine</h3>
+      <pre><code class="language-python"># backend/app/services/alert_engine.py
+for rule in rules:
+    value = _metric_value(reading, rule.metric)   # temperature / humidity / battery
+    compare = OPERATORS[rule.operator]            # >, <, >=, <=, ==, !=
+    if not compare(value, rule.threshold):
+        continue
+    if elapsed < timedelta(minutes=rule.cooldown_minutes):
+        continue                                  # 還在 cooldown 內，跳過
+    await _fire_alert(db, rule, reading, sensor, value, now)</code></pre>
+
+      <h3>階段 ③ — WebSocket Broadcast</h3>
+      <p><code>ConnectionManager</code> 維護 <code>list[WebSocket]</code>，自動清掉拋出例外的斷線 client：</p>
+      <pre><code class="language-python"># backend/app/main.py
+async def broadcast(self, payload: dict) -> None:
+    message = json.dumps(payload)
+    dead = []
+    for ws in self._connections:
+        try:
+            await ws.send_text(message)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        self._connections.remove(ws)</code></pre>
+    </section>
+
+    <!-- ── 3. Database Schema ── -->
+    <section id="schema">
+      <h2><span class="num">3</span> Database Schema</h2>
+      <p class="section-desc">SQLite，4 張表，由 SQLAlchemy 2.0 async ORM 管理，啟動時 <code>metadata.create_all</code> 自動建表。</p>
+
+      <div class="diagram-box">
+        <div class="mermaid">
+erDiagram
+    sensors {
+        int id PK
+        string name
+        string ble_address UK
+        string location
+        bool is_active
+        datetime created_at
+    }
+    readings {
+        int id PK
+        int sensor_id FK
+        float temperature
+        float humidity
+        int battery
+        datetime timestamp
+    }
+    alert_rules {
+        int id PK
+        string name
+        int sensor_id FK
+        string metric
+        string operator
+        float threshold
+        string channel
+        string channel_target
+        int cooldown_minutes
+        datetime last_triggered_at
+        bool is_active
+        datetime created_at
+    }
+    alert_logs {
+        int id PK
+        int rule_id FK
+        int sensor_id FK
+        int reading_id FK
+        float metric_value
+        datetime triggered_at
+        bool notification_sent
+        string error_message
+    }
+    sensors ||--o{ readings : "has many"
+    sensors ||--o{ alert_rules : "scoped to"
+    sensors ||--o{ alert_logs : "triggered for"
+    alert_rules ||--o{ alert_logs : "produces"
+    readings ||--o{ alert_logs : "causes"
+        </div>
+      </div>
+
+      <h3>重點設計</h3>
+      <table>
+        <thead><tr><th>設計</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>alert_rules.sensor_id = NULL</code></td><td>全域規則，套用到所有 sensor，不需要重複建立 N 條</td></tr>
+          <tr><td><code>alert_logs</code> append-only</td><td><code>notification_sent=false</code> + <code>error_message</code> 可追蹤失敗原因</td></tr>
+          <tr><td><code>readings.timestamp</code> 有 index</td><td>讓歷史查詢按時間範圍篩選高效</td></tr>
+          <tr><td>無 migration 工具</td><td>schema 改了就刪 <code>backend/data/sensors.db</code>，由 <code>init_db()</code> 重建</td></tr>
+        </tbody>
+      </table>
+
+      <h3>欄位細節</h3>
+      <p><strong>sensors</strong></p>
+      <ul>
+        <li><code>ble_address</code>：macOS 上是 UUID 字串（不是 MAC address），<code>bleak</code> 在 macOS 的行為如此</li>
+        <li><code>is_active = false</code>：BLEScanner 掃描時跳過，但資料與 rules 保留</li>
+      </ul>
+      <p><strong>alert_rules</strong></p>
+      <ul>
+        <li><code>metric</code>：<code>temperature</code> | <code>humidity</code> | <code>battery</code></li>
+        <li><code>operator</code>：<code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code> <code>==</code> <code>!=</code></li>
+        <li><code>channel_target</code>：email 填 email address；telegram 填 numeric chat ID；line 填 personal access token</li>
+        <li><code>cooldown_minutes</code>：預設 30 分鐘，防止通知洗版</li>
+      </ul>
+      <p><strong>alert_logs</strong></p>
+      <ul>
+        <li><code>notification_sent = false</code> + <code>error_message</code> 記錄送出失敗的原因</li>
+        <li>append-only，不刪不改，是完整的通知歷程</li>
+      </ul>
+    </section>
+
+    <!-- ── 4. Backend Module Map ── -->
+    <section id="backend">
+      <h2><span class="num">4</span> Backend Module Map</h2>
+      <p class="section-desc">各模組的依賴關係與職責。</p>
+
+      <div class="diagram-box">
+        <div class="mermaid">
+graph TD
+    subgraph entry["Entry Point"]
+        MAIN["main.py\nFastAPI app + lifespan\nConnectionManager\nWebSocket /ws + GET /health"]
+    end
+    subgraph core["Core"]
+        CFG["config.py\nPydantic BaseSettings\nreads .env"]
+        DBMOD["database.py\nSQLAlchemy async engine\nAsyncSessionLocal + Base"]
+    end
+    subgraph apig["api/ — REST Routers"]
+        S_API["sensors.py\nCRUD + trigger + scan-ble"]
+        R_API["readings.py\nlist + latest + filters"]
+        AR_API["alert_rules.py\nCRUD + test notification"]
+    end
+    subgraph modg["models/ — SQLAlchemy ORM"]
+        M_S["sensor.py\nSensor"]
+        M_R["reading.py\nReading"]
+        M_AR["alert_rule.py\nAlertRule + AlertLog"]
+    end
+    subgraph scmg["schemas/ — Pydantic I/O"]
+        SC_S["sensor.py"]
+        SC_R["reading.py"]
+        SC_AR["alert_rule.py"]
+    end
+    subgraph svcg["services/ — Business Logic"]
+        SCANNER["ble_scanner.py\nBLEScanner\nread_sensor_ble()\n_simulate_reading()\ndiscover_devices()"]
+        ENGINE["alert_engine.py\nevaluate_rules()\n_fire_alert()\ncooldown check"]
+        HOMEKIT["homekit_bridge.py\nHAP-python Bridge\npolls REST API\nstandalone process"]
+        subgraph notg["notifiers/"]
+            BASE["base.py\nBaseNotifier ABC"]
+            EN["email_notifier.py"]
+            TGN["telegram_notifier.py"]
+            LN["line_notifier.py"]
+        end
+    end
+
+    MAIN --> CFG
+    MAIN --> DBMOD
+    MAIN --> SCANNER
+    MAIN --> S_API
+    MAIN --> R_API
+    MAIN --> AR_API
+    S_API --> SCANNER
+    S_API --> M_S
+    S_API --> SC_S
+    R_API --> M_R
+    R_API --> SC_R
+    AR_API --> M_AR
+    AR_API --> SC_AR
+    SCANNER --> ENGINE
+    SCANNER --> M_S
+    SCANNER --> M_R
+    ENGINE --> M_AR
+    ENGINE --> EN
+    ENGINE --> TGN
+    ENGINE --> LN
+    EN --> BASE
+    TGN --> BASE
+    LN --> BASE
+        </div>
+      </div>
+
+      <h3>Global Singleton — 避免 Circular Import</h3>
+      <p><code>main.py</code> 無法直接把 <code>manager.broadcast</code> 傳給 <code>ble_scanner</code>（會 circular import），改用 module-level 變數：</p>
+      <pre><code class="language-python"># backend/app/services/ble_scanner.py
+_scanner_instance: "BLEScanner | None" = None  # API routes 用這個 trigger 手動掃描
+_ws_broadcast_fn = None                         # main.py 啟動後注入
+
+# backend/app/main.py — lifespan()
+scanner = ble_scanner.BLEScanner()
+ble_scanner._scanner_instance = scanner                   # 暴露給 API routes
+ble_scanner.register_broadcast(manager.broadcast)         # 注入 broadcast fn</code></pre>
+
+      <h3>Notifier — Strategy Pattern</h3>
+      <p>新增通知管道不需要改 <code>alert_engine</code>，只要新增一個 <code>BaseNotifier</code> 子類並登記進 <code>NOTIFIERS</code> dict：</p>
+      <pre><code class="language-python"># backend/app/services/notifiers/__init__.py
+NOTIFIERS = {
+    "email":    EmailNotifier(),
+    "telegram": TelegramNotifier(),
+    "line":     LineNotifier(),
+}
+
+# backend/app/services/alert_engine.py
+notifier = NOTIFIERS.get(rule.channel)
+await notifier.send(rule.channel_target, subject, body)</code></pre>
+
+      <h3>Lifespan Context Manager</h3>
+      <p>FastAPI 的 <code>lifespan</code> 取代舊版 <code>@app.on_event</code>，確保 startup/shutdown 對稱：</p>
+      <pre><code class="language-python"># backend/app/main.py
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()        # startup: 建表
+    scanner = BLEScanner()
+    await scanner.start()  # startup: 啟動背景 asyncio Task
+    yield
+    await scanner.stop()   # shutdown: 取消 Task，等待結束</code></pre>
+    </section>
+
+    <!-- ── 5. Frontend Component Tree ── -->
+    <section id="frontend">
+      <h2><span class="num">5</span> Frontend Component Tree</h2>
+      <p class="section-desc">React Router v6，4 個 page，所有 HTTP 呼叫集中在 <code>api/client.js</code>。</p>
+
+      <div class="diagram-box">
+        <div class="mermaid">
+graph TD
+    subgraph root["React App"]
+        MAINJ["main.jsx\nReactDOM.createRoot"]
+        APP["App.jsx\nReact Router v6\n4 routes"]
+    end
+    subgraph pages["pages/"]
+        DASH["Dashboard.jsx\nuseWebSocket + useState\nrealtime sensor cards"]
+        SP["SensorsPage.jsx\nCRUD sensors + BLE scan"]
+        AP["AlertRulesPage.jsx\nCRUD rules + test btn"]
+        HP["HistoryPage.jsx\ntime-range filter + chart"]
+    end
+    subgraph comps["components/"]
+        NAV["Navbar.jsx"]
+        CARD["SensorCard.jsx\ntemp / humidity / battery"]
+        CHART["SensorChart.jsx\nRecharts LineChart"]
+        ARF["AlertRuleForm.jsx"]
+        ARL["AlertRuleList.jsx\nlist + delete + test"]
+    end
+    subgraph hooks["hooks/"]
+        WS["useWebSocket.js\nauto-reconnect 3s\nping every 20s"]
+    end
+    subgraph apil["api/"]
+        CLIENT["client.js\naxios instance\nall HTTP calls here"]
+    end
+
+    MAINJ --> APP
+    APP --> NAV
+    APP --> DASH
+    APP --> SP
+    APP --> AP
+    APP --> HP
+    DASH --> CARD
+    DASH --> WS
+    HP --> CHART
+    AP --> ARF
+    AP --> ARL
+    DASH --> CLIENT
+    SP --> CLIENT
+    AP --> CLIENT
+    HP --> CLIENT
+        </div>
+      </div>
+
+      <h3>WebSocket 即時更新</h3>
+      <pre><code class="language-javascript">// frontend/src/pages/Dashboard.jsx
+const [readings, setReadings] = useState({})  // key = sensor_id
+
+useWebSocket("/ws", (msg) => {
+  const data = JSON.parse(msg)
+  if (data.type === "reading") {
+    setReadings(prev => ({ ...prev, [data.sensor_id]: data }))
+  }
+})
+// 只更新對應 sensor 的 card，不重繪其他的</code></pre>
+
+      <h3>集中 API 層</h3>
+      <pre><code class="language-javascript">// frontend/src/api/client.js — component 不直接碰 axios
+// Vite dev server proxy 把 /api 和 /ws 轉發到 localhost:8000
+// frontend 和 backend 看同一個 origin → 不需要 CORS header</code></pre>
+
+      <h3>Tailwind 共用 CSS 類別</h3>
+      <pre><code class="language-css">/* frontend/src/index.css */
+@layer components {
+  .btn-primary { @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700; }
+  .btn-danger  { @apply bg-red-600  text-white px-4 py-2 rounded hover:bg-red-700; }
+  .input       { @apply border rounded px-3 py-2 w-full focus:outline-none; }
+}</code></pre>
+    </section>
+
+    <!-- ── 6. 架構決策 ── -->
+    <section id="decisions">
+      <h2><span class="num">6</span> 關鍵架構決策</h2>
+      <p class="section-desc">每個設計選擇背後的理由。</p>
+
+      <table>
+        <thead><tr><th>決策</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>HomeKit Bridge 是獨立 process</td>
+            <td>HAP-python 有自己的 asyncio loop，嵌入 FastAPI lifespan 會 deadlock</td>
+          </tr>
+          <tr>
+            <td>SQLite（無 migration）</td>
+            <td>降低部署複雜度；溫濕度每分鐘一筆，SQLite 綽綽有餘</td>
+          </tr>
+          <tr>
+            <td>WebSocket broadcast 在 BLE loop 裡</td>
+            <td>讀完就推，延遲最低，不需要 polling</td>
+          </tr>
+          <tr>
+            <td>Alert cooldown 存在 DB</td>
+            <td>restart 後 cooldown 狀態不遺失</td>
+          </tr>
+          <tr>
+            <td><code>sensor_id = NULL</code> = 全域規則</td>
+            <td>一條規則保護所有 sensor，不需要重複建立 N 條</td>
+          </tr>
+          <tr>
+            <td>macOS BLE 用 UUID 而非 MAC</td>
+            <td><code>bleak</code> 在 macOS 回傳 UUID，這是 CoreBluetooth 的 OS 限制，不是 bug</td>
+          </tr>
+          <tr>
+            <td>module-level <code>_scanner_instance</code></td>
+            <td>避免 API routes 和 <code>main.py</code> 之間的 circular import</td>
+          </tr>
+          <tr>
+            <td>Vite proxy <code>/api</code> &amp; <code>/ws</code></td>
+            <td>dev 環境不需要 CORS，frontend 和 backend 看起來在同一個 origin</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
