@@ -94,7 +94,7 @@ def _simulate_reading() -> SensorData:
 # --------------------------------------------------------------------------- #
 
 
-async def discover_devices(timeout: float = 10.0) -> list[dict]:
+async def discover_devices(timeout: float = 30.0) -> list[dict]:
     devices = await BleakScanner.discover(timeout=timeout, return_adv=True)
     result = []
     for device, adv in devices.values():
@@ -244,10 +244,13 @@ if __name__ == "__main__":
                 return
 
             lywsd = [d for d in found if "LYWSD03MMC" in (d["name"] or "")]
-            targets = lywsd or found
-            label = f"{len(lywsd)} LYWSD03MMC sensor(s)" if lywsd else f"all {len(found)} device(s)"
+            if not lywsd:
+                print("\nNo LYWSD03MMC sensors found.")
+                return
+            targets = lywsd
+            n = len(lywsd)
             interval = settings.scan_interval_seconds
-            print(f"\nTargeting {label}. Reading every {interval}s. Ctrl+C to stop.\n")
+            print(f"\nTargeting {n} LYWSD03MMC sensor(s). Reading every {interval}s.\n")
 
         while True:
             for d in targets:

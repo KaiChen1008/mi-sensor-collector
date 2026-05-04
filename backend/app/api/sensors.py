@@ -42,7 +42,13 @@ async def scan_ble_devices():
         devices = await ble_scanner.discover_devices(timeout=10.0)
         return devices
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"BLE scan failed: {exc}")
+        ble_unavailable = "No such file or directory" in str(exc) or "dbus" in str(exc).lower()
+        detail = (
+            "BLE hardware is not accessible. Set SIMULATE_SENSORS=true to use simulated data."
+            if ble_unavailable
+            else f"BLE scan failed: {exc}"
+        )
+        raise HTTPException(status_code=503, detail=detail)
 
 
 @router.get("/{sensor_id}", response_model=SensorOut)
