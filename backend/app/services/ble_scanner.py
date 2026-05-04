@@ -210,7 +210,7 @@ if __name__ == "__main__":
         parser.add_argument(
             "--timeout",
             type=float,
-            default=10.0,
+            default=30.0,
             metavar="SECS",
             help="BLE discovery timeout in seconds (default: 10)",
         )
