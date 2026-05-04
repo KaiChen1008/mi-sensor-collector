@@ -206,39 +206,56 @@ if __name__ == "__main__":
     import argparse
 
     async def _main() -> None:
-        parser = argparse.ArgumentParser(description="Run the BLE scanner standalone.")
+        parser = argparse.ArgumentParser(description="Discover BLE sensors and run scanner.")
         parser.add_argument(
-            "--address",
-            metavar="BLE_ADDR",
-            help="read a single sensor by address and exit (no DB required)",
+            "--timeout",
+            type=float,
+            default=10.0,
+            metavar="SECS",
+            help="BLE discovery timeout in seconds (default: 10)",
         )
         args = parser.parse_args()
 
-        if args.address:
-            # One-shot read — useful for verifying hardware without touching the DB
-            print(f"Reading {args.address} (simulate={settings.simulate_sensors})...")
-            data = (
-                _simulate_reading()
-                if settings.simulate_sensors
-                else await read_sensor_ble(args.address)
-            )
-            print(f"  temperature : {data.temperature} °C")
-            print(f"  humidity    : {data.humidity} %")
-            print(f"  battery     : {data.battery} %")
-            return
+        if settings.simulate_sensors:
+            # Simulated mode: no real BLE scan, use one placeholder device
+            targets = [{"name": "Simulated Sensor", "address": "SIMULATED"}]
+            print("Simulate mode — skipping BLE discovery.\n")
+        else:
+            print(f"Scanning for nearby BLE devices ({args.timeout:.0f}s)...")
+            found = await discover_devices(timeout=args.timeout)
+            if not found:
+                print("No BLE devices found.")
+                return
 
-        from app.database import init_db
+            print(f"\nFound {len(found)} device(s):")
+            for d in found:
+                flag = " ← LYWSD03MMC" if "LYWSD03MMC" in (d["name"] or "") else ""
+                print(f"  {d['name']:35s}  {d['address']}  RSSI {d['rssi']}{flag}")
 
-        await init_db()
-        scanner = BLEScanner()
-        await scanner.start()
-        try:
-            while True:
-                await asyncio.sleep(1)
-        except (KeyboardInterrupt, asyncio.CancelledError):
-            pass
-        finally:
-            await scanner.stop()
+            lywsd = [d for d in found if "LYWSD03MMC" in (d["name"] or "")]
+            targets = lywsd or found
+            label = f"{len(lywsd)} LYWSD03MMC sensor(s)" if lywsd else f"all {len(found)} device(s)"
+            interval = settings.scan_interval_seconds
+            print(f"\nTargeting {label}. Reading every {interval}s. Ctrl+C to stop.\n")
+
+        while True:
+            for d in targets:
+                try:
+                    data = (
+                        _simulate_reading()
+                        if settings.simulate_sensors
+                        else await read_sensor_ble(d["address"])
+                    )
+                    print(
+                        f"[{d['name']}]  temp={data.temperature}°C"
+                        f"  humidity={data.humidity}%  battery={data.battery}%"
+                    )
+                except Exception as exc:
+                    print(f"[{d['name']}] error: {exc}")
+            await asyncio.sleep(settings.scan_interval_seconds)
 
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(_main())
+    try:
+        asyncio.run(_main())
+    except KeyboardInterrupt:
+        print("\nStopped.")
