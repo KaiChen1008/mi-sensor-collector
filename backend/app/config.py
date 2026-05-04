@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = 8002
     database_url: str = "sqlite+aiosqlite:///./data/sensors.db"
-    scan_interval_seconds: int = 60
+    scan_interval_seconds: int = 300
     # Set to true to generate fake readings (useful when no BLE hardware available)
     simulate_sensors: bool = False
 
