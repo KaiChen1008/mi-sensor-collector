@@ -138,7 +138,10 @@ class BLEScanner:
 
     async def _loop(self) -> None:
         while self._running:
-            await self._scan_all_sensors()
+            try:
+                await self._scan_all_sensors()
+            except Exception as exc:
+                logger.error("Scanner loop error: %s", exc)
             await asyncio.sleep(settings.scan_interval_seconds)
 
     async def _scan_all_sensors(self) -> None:
@@ -146,6 +149,7 @@ class BLEScanner:
             result = await db.execute(select(Sensor).where(Sensor.is_active))
             sensors = result.scalars().all()
 
+        logger.info("Scanning %d active sensor(s)...", len(sensors))
         for sensor in sensors:
             await self._read_and_store(sensor)
 
@@ -199,8 +203,33 @@ class BLEScanner:
 
 
 if __name__ == "__main__":
+    import argparse
 
     async def _main() -> None:
+        parser = argparse.ArgumentParser(description="Run the BLE scanner standalone.")
+        parser.add_argument(
+            "--address",
+            metavar="BLE_ADDR",
+            help="read a single sensor by address and exit (no DB required)",
+        )
+        args = parser.parse_args()
+
+        if args.address:
+            # One-shot read — useful for verifying hardware without touching the DB
+            print(f"Reading {args.address} (simulate={settings.simulate_sensors})...")
+            data = (
+                _simulate_reading()
+                if settings.simulate_sensors
+                else await read_sensor_ble(args.address)
+            )
+            print(f"  temperature : {data.temperature} °C")
+            print(f"  humidity    : {data.humidity} %")
+            print(f"  battery     : {data.battery} %")
+            return
+
+        from app.database import init_db
+
+        await init_db()
         scanner = BLEScanner()
         await scanner.start()
         try:
