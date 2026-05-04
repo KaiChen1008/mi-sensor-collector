@@ -9,6 +9,13 @@ Data layout (5 bytes):
 Battery % is estimated from voltage (2.1 V ≅ 0 %, 3.1 V ≅ 100 %).
 """
 
+import sys
+from pathlib import Path
+
+if __name__ == "__main__":
+    # Allow `uv run app/services/ble_scanner.py` from the backend/ directory
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import asyncio
 import logging
 import random

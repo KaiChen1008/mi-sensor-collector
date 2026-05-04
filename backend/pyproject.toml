@@ -29,3 +29,6 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = ["F821"]  # SQLAlchemy ORM forward references in Mapped[] type hints
+
+[tool.ruff.lint.per-file-ignores]
+"app/services/ble_scanner.py" = ["E402"]  # sys.path bootstrap must precede app imports
