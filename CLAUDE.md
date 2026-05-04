@@ -35,6 +35,20 @@ uv run pytest tests/test_api_sensors.py -k create   # single test
 Tests use an in-memory SQLite database and mock all BLE and external HTTP calls.
 `SIMULATE_SENSORS=true` is set automatically in `conftest.py`.
 
+### Lint & format (run from `backend/`)
+```bash
+uv run ruff format .    # auto-format all Python files
+uv run ruff check .     # lint (E, F, I rules; F821 ignored for SQLAlchemy forward refs)
+uv run ruff check --fix .  # lint + auto-fix
+```
+
+**Run after every change**: always run `uv run pytest` and `uv run ruff check .` before considering any backend task complete. Or use `make check` to run format + lint + test together.
+
+## After every Claude prompt
+
+- Run `make check` (format + lint + test) for any backend change.
+- Update `CLAUDE.md` and `README.md` if commands, architecture, or project structure changed.
+
 ### HomeKit bridge (run from `backend/`)
 ```bash
 uv run python -m app.services.homekit_bridge     # starts on port 51826

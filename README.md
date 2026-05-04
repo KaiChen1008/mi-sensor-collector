@@ -61,6 +61,24 @@ SIMULATE=true ./start-dev.sh
 
 macOS will prompt for Bluetooth permission on first run.
 
+## Make commands
+
+A `Makefile` is included at the repo root for convenience:
+
+```bash
+make install       # install backend (uv) + frontend (npm) dependencies
+make dev           # start backend + frontend
+make dev-sim       # start with simulated sensor data
+make dev-full      # simulated data + HomeKit bridge
+make test          # run all 93 backend tests
+make lint          # ruff check
+make clean         # remove Python cache + test artifacts
+make clean-db      # delete SQLite database (recreated on startup)
+make clean-all     # full clean including node_modules
+```
+
+Run `make` or `make help` to see all available commands.
+
 ## Manual setup (without Docker)
 
 ### Backend
