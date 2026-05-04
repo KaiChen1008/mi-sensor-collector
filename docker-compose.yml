@@ -2,7 +2,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8002:8002"
     volumes:
       - ./backend/data:/app/data
     env_file:
@@ -13,7 +13,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:80"
+      - "8001:80"
     depends_on:
       - backend
 
@@ -29,7 +29,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - API_BASE_URL=http://backend:8000
+      - API_BASE_URL=http://backend:8002
     depends_on:
       - backend
     profiles:

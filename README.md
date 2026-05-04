@@ -39,8 +39,8 @@ cp backend/.env.example backend/.env
 docker compose up
 ```
 
-Frontend → http://localhost:3000  
-Backend API docs → http://localhost:8000/docs
+Frontend → http://localhost:8001  
+Backend API docs → http://localhost:8002/docs
 
 With the optional HomeKit bridge:
 ```bash
@@ -185,7 +185,7 @@ SIMULATE=true HOMEKIT=true ./start-dev.sh
 | Variable | Default | Description |
 |---|---|---|
 | `HOMEKIT_PORT` | `51826` | UDP/TCP port for HAP protocol |
-| `API_BASE_URL` | `http://localhost:8000` | Where the HomeKit bridge fetches readings from |
+| `API_BASE_URL` | `http://localhost:8002` | Where the HomeKit bridge fetches readings from |
 
 ## Project layout
 

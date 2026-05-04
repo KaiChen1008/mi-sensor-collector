@@ -24,19 +24,19 @@ fi
 SIMULATE=${SIMULATE:-false}
 HOMEKIT=${HOMEKIT:-false}
 
-echo "Starting backend  → http://localhost:8000  (simulate=$SIMULATE)"
+echo "Starting backend  → http://localhost:8002  (simulate=$SIMULATE)"
 cd "$ROOT/backend"
 SIMULATE_SENSORS=$SIMULATE uv run python run.py &
 BACKEND_PID=$!
 
-echo "Starting frontend → http://localhost:3000"
+echo "Starting frontend → http://localhost:8001"
 npm run dev --prefix "$ROOT/frontend" &
 FRONTEND_PID=$!
 
 HOMEKIT_PID=""
 if [ "$HOMEKIT" = "true" ]; then
   printf "Waiting for backend to be ready..."
-  until curl -sf http://localhost:8000/health > /dev/null 2>&1; do
+  until curl -sf http://localhost:8002/health > /dev/null 2>&1; do
     printf "."
     sleep 1
   done
@@ -47,8 +47,8 @@ if [ "$HOMEKIT" = "true" ]; then
 fi
 
 echo ""
-echo "  Frontend  http://localhost:3000"
-echo "  API docs  http://localhost:8000/docs"
+echo "  Frontend  http://localhost:8001"
+echo "  API docs  http://localhost:8002/docs"
 [ "$HOMEKIT" = "true" ] && echo "  HomeKit   port 51826"
 echo ""
 echo "Press Ctrl+C to stop all processes."

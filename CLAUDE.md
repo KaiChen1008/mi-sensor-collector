@@ -15,13 +15,13 @@ uv run python run.py
 # Start with simulated data (no BLE hardware needed)
 SIMULATE_SENSORS=true uv run python run.py
 
-# API docs available at http://localhost:8000/docs
+# API docs available at http://localhost:8002/docs
 ```
 
 ### Frontend (run from `frontend/`)
 ```bash
 npm install       # first-time setup
-npm run dev       # dev server on :3000 with HMR
+npm run dev       # dev server on :8001 with HMR
 npm run build     # production build to dist/
 ```
 
@@ -64,7 +64,7 @@ HOMEKIT=true ./start-dev.sh             # also start HomeKit bridge
 SIMULATE=true HOMEKIT=true ./start-dev.sh
 ```
 
-The Vite dev server proxies `/api` and `/ws` to `localhost:8000`, so the frontend always talks to the backend through the same origin.
+The Vite dev server proxies `/api` and `/ws` to `localhost:8002`, so the frontend always talks to the backend through the same origin.
 
 ## Architecture
 
@@ -87,7 +87,7 @@ BLEScanner (asyncio task)
 
 **Notifiers** (`services/notifiers/`): `base.py` defines the `BaseNotifier` ABC (`send(target, subject, body)`). The `NOTIFIERS` dict in `__init__.py` is the registry — add a new channel by subclassing `BaseNotifier` and registering it there.
 
-**Config** (`config.py`): Pydantic `BaseSettings` reads from `.env` (copy from `.env.example`). Key variables: `APP_HOST`/`APP_PORT` (default `0.0.0.0:8000`), `SCAN_INTERVAL_SECONDS` (default `60`), `SIMULATE_SENSORS`, `HOMEKIT_PORT` (default `51826`), `API_BASE_URL` (default `http://localhost:8000`), plus SMTP/Telegram/LINE credentials. The `simulate_sensors` flag is the main toggle for development without hardware.
+**Config** (`config.py`): Pydantic `BaseSettings` reads from `.env` (copy from `.env.example`). Key variables: `APP_HOST`/`APP_PORT` (default `0.0.0.0:8002`), `SCAN_INTERVAL_SECONDS` (default `60`), `SIMULATE_SENSORS`, `HOMEKIT_PORT` (default `51826`), `API_BASE_URL` (default `http://localhost:8002`), plus SMTP/Telegram/LINE credentials. The `simulate_sensors` flag is the main toggle for development without hardware.
 
 **Database** (`database.py`): SQLAlchemy 2.0 async with `aiosqlite`. The `data/sensors.db` file is created automatically on startup. `init_db()` runs `metadata.create_all` — no migration tooling is set up; schema changes require dropping and recreating the DB.
 

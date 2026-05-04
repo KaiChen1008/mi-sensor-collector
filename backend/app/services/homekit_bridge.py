@@ -44,7 +44,7 @@ from pyhap.accessory_driver import AccessoryDriver
 logger = logging.getLogger(__name__)
 
 POLL_INTERVAL_SECONDS = 30
-API_BASE = os.environ.get("API_BASE_URL", "http://localhost:8000")
+API_BASE = os.environ.get("API_BASE_URL", "http://localhost:8002")
 HAP_STATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "homekit")
 HAP_STATE_FILE = os.path.join(HAP_STATE_DIR, "state.json")
 HAP_PORT = int(os.environ.get("HOMEKIT_PORT", "51826"))
