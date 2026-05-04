@@ -5,6 +5,7 @@ FRONTEND_DIR := frontend
 .PHONY: help install \
         dev dev-sim dev-homekit dev-full \
         backend backend-sim frontend homekit \
+        scan scan-sim \
         test test-v test-file \
         lint lint-fix format check \
         build docker-up docker-down docker-homekit docker-build \
@@ -34,6 +35,13 @@ dev-homekit: ## Start backend + frontend + HomeKit bridge
 
 dev-full: ## Start everything with simulated data + HomeKit bridge
 	SIMULATE=true HOMEKIT=true ./start-dev.sh
+
+# ── BLE discovery ────────────────────────────────────────────────────────────────
+scan: ## Scan for nearby BLE devices and list them (10s discovery, then exit)
+	cd $(BACKEND_DIR) && uv run app/services/ble_scanner.py --list-only
+
+scan-sim: ## List simulated sensor (no BLE hardware needed)
+	cd $(BACKEND_DIR) && SIMULATE_SENSORS=true uv run app/services/ble_scanner.py --list-only
 
 # ── Individual services ──────────────────────────────────────────────────────────
 backend: ## Run backend only (real BLE)

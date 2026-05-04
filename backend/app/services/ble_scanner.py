@@ -214,10 +214,14 @@ if __name__ == "__main__":
             metavar="SECS",
             help="BLE discovery timeout in seconds (default: 10)",
         )
+        parser.add_argument(
+            "--list-only",
+            action="store_true",
+            help="print discovered devices and exit without reading",
+        )
         args = parser.parse_args()
 
         if settings.simulate_sensors:
-            # Simulated mode: no real BLE scan, use one placeholder device
             targets = [{"name": "Simulated Sensor", "address": "SIMULATED"}]
             print("Simulate mode — skipping BLE discovery.\n")
         else:
@@ -227,10 +231,17 @@ if __name__ == "__main__":
                 print("No BLE devices found.")
                 return
 
-            print(f"\nFound {len(found)} device(s):")
+            print(f"\nFound {len(found)} device(s):\n")
+            print(f"  {'NAME':<35}  {'ADDRESS':<40}  {'RSSI':>5}")
+            print(f"  {'-' * 35}  {'-' * 40}  {'-' * 5}")
             for d in found:
-                flag = " ← LYWSD03MMC" if "LYWSD03MMC" in (d["name"] or "") else ""
-                print(f"  {d['name']:35s}  {d['address']}  RSSI {d['rssi']}{flag}")
+                flag = "  ← LYWSD03MMC" if "LYWSD03MMC" in (d["name"] or "") else ""
+                print(f"  {d['name']:<35}  {d['address']:<40}  {d['rssi']:>5}{flag}")
+
+            if args.list_only:
+                lywsd_count = sum(1 for d in found if "LYWSD03MMC" in (d["name"] or ""))
+                print(f"\n{lywsd_count} LYWSD03MMC sensor(s) out of {len(found)} device(s) found.")
+                return
 
             lywsd = [d for d in found if "LYWSD03MMC" in (d["name"] or "")]
             targets = lywsd or found
