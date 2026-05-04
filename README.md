@@ -70,8 +70,11 @@ make install       # install backend (uv) + frontend (npm) dependencies
 make dev           # start backend + frontend
 make dev-sim       # start with simulated sensor data
 make dev-full      # simulated data + HomeKit bridge
+make scan          # discover nearby BLE devices and list them (10s), then exit
+make scan-sim      # same but with simulated data (no hardware needed)
 make test          # run all 93 backend tests
 make lint          # ruff check
+make check         # format + lint + test
 make clean         # remove Python cache + test artifacts
 make clean-db      # delete SQLite database (recreated on startup)
 make clean-all     # full clean including node_modules
@@ -200,7 +203,7 @@ mi-sensor-collector/
 │   │   ├── schemas/           # Pydantic request/response types
 │   │   ├── api/               # REST route handlers
 │   │   └── services/
-│   │       ├── ble_scanner.py     # BLE polling loop + simulator
+│   │       ├── ble_scanner.py     # BLE polling loop + simulator + standalone CLI
 │   │       ├── alert_engine.py    # Rule evaluation + cooldown logic
 │   │       ├── homekit_bridge.py  # Apple HomeKit HAP bridge (standalone process)
 │   │       └── notifiers/         # Email / Telegram / LINE senders
@@ -216,6 +219,8 @@ mi-sensor-collector/
 │   │   └── pages/             # Dashboard, SensorsPage, AlertRulesPage, HistoryPage
 │   ├── Dockerfile             # Multi-stage: Node build → nginx
 │   └── nginx.conf             # Serves static files + proxies /api and /ws to backend
+├── docs/                      # Architecture guide (GitHub Pages)
 ├── docker-compose.yml         # backend + frontend; homekit via --profile homekit
+├── Makefile                   # dev / test / lint / scan / clean targets
 └── start-dev.sh               # Local dev: backend + frontend (+ optional HomeKit bridge)
 ```

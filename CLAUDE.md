@@ -49,6 +49,22 @@ uv run ruff check --fix .  # lint + auto-fix
 - Run `make check` (format + lint + test) for any backend change.
 - Update `CLAUDE.md` and `README.md` if commands, architecture, or project structure changed.
 
+### BLE scanner standalone (run from `backend/`)
+```bash
+# Discover all nearby BLE devices, list them, then exit
+uv run app/services/ble_scanner.py --list-only
+
+# Discover + run continuous read loop (no DB needed)
+uv run app/services/ble_scanner.py
+
+# Faster discovery (5s instead of default 10s)
+uv run app/services/ble_scanner.py --timeout 5
+
+# Simulated mode — no BLE hardware required
+SIMULATE_SENSORS=true uv run app/services/ble_scanner.py --list-only
+```
+The standalone mode auto-discovers nearby devices, highlights LYWSD03MMC sensors, and reads them in a loop without requiring DB registration. `init_db()` is called automatically so tables are created if absent.
+
 ### HomeKit bridge (run from `backend/`)
 ```bash
 uv run python -m app.services.homekit_bridge     # starts on port 51826
