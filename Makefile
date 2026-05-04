@@ -92,6 +92,9 @@ docker-down: ## Stop and remove Docker Compose containers
 docker-homekit: ## Start all services including HomeKit bridge via Docker
 	docker compose --profile homekit up
 
+docker-ble: ## Start with real BLE on a Linux host (mounts DBus socket; does not work on macOS/Windows)
+	docker compose -f docker-compose.yml -f docker-compose.ble.yml up
+
 docker-build: ## Rebuild Docker images
 	docker compose build
 

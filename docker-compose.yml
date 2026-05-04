@@ -6,9 +6,12 @@ services:
     volumes:
       - ./backend/data:/app/data
     env_file:
-      - ./backend/.env
-    # BLE only works on Linux with host networking + Bluetooth device access.
-    # For development or any non-Linux host, use SIMULATE_SENSORS=true in .env.
+      - path: ./backend/.env
+        required: false
+    environment:
+      # Docker on macOS/Windows has no BLE — simulate by default.
+      # Override with: SIMULATE_SENSORS=false docker compose ... (Linux only; see docker-compose.ble.yml)
+      - SIMULATE_SENSORS=${SIMULATE_SENSORS:-true}
 
   frontend:
     build: ./frontend

@@ -1,0 +1,21 @@
+# Linux-only overlay: grants the backend container access to the host's
+# Bluetooth stack (BlueZ) via the DBus system socket.
+#
+# Requirements:
+#   - Linux host with BlueZ installed and running (bluetoothd active)
+#   - Bluetooth adapter visible to the host (`hciconfig` should list hci0)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.ble.yml up
+#   make docker-ble
+#
+# macOS / Windows: Docker Desktop runs in a Linux VM with no Bluetooth
+# passthrough — BLE in Docker is not possible. Run the backend locally instead:
+#   ./start-dev.sh   (or SIMULATE=true ./start-dev.sh for simulated data)
+services:
+  backend:
+    privileged: true
+    volumes:
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
+    environment:
+      - SIMULATE_SENSORS=false
